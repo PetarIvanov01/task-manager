@@ -1,19 +1,19 @@
 package components
 
+import platform "../../platform/"
 import c "../constants"
 import u "../utils"
-import platform "../../platform/"
 import rl "vendor:raylib"
 
-draw_top_bar :: proc(close_tex, min_tex: rl.Texture2D) -> bool {
+draw_top_bar :: proc(font: rl.Font, close_tex, min_tex: rl.Texture2D) -> (i32, bool) {
 	rl.DrawRectangle(0, 0, rl.GetScreenWidth(), i32(c.TOP_BAR_HEIGHT), c.TOP_BAR)
 
 	title_x: i32 = 24
 	title_y := u.get_center_y(c.FONT_SIZE_TITLE, i32(c.TOP_BAR_HEIGHT))
 
-	rl.DrawText(c.WINDOW_TITLE, title_x, title_y, c.FONT_SIZE_TITLE, c.TEXT_INFO)
+	title_pos := rl.Vector2{f32(title_x), f32(title_y)}
+	rl.DrawTextEx(font, c.WINDOW_TITLE, title_pos, f32(c.FONT_SIZE_TITLE), 0, c.TEXT_INFO)
 
-	// Icons
 	screen_width := f32(rl.GetScreenWidth())
 
 	close_button := rl.Rectangle {
@@ -78,8 +78,8 @@ draw_top_bar :: proc(close_tex, min_tex: rl.Texture2D) -> bool {
 	}
 
 	if close_hovered && rl.IsMouseButtonReleased(.LEFT) {
-		return true
+		return i32(c.TOP_BAR_HEIGHT), true
 	}
 
-	return false
+	return i32(c.TOP_BAR_HEIGHT), false
 }
