@@ -12,7 +12,10 @@ WINDOW_HEIGHT_MIN :: 420
 WINDOW_TITLE :: "Vigil"
 
 // Typography
-FONT_SIZE_TITLE :: 25
+FONT_PATH :: "C:/Windows/Fonts/segoeui.ttf"
+FONT_SIZE_TITLE :: 40
+FONT_SIZE_LABEL :: 30
+FONT_SIZE_INFO :: 30
 
 // Layout
 TOP_BAR_HEIGHT :: f32(42)
@@ -32,3 +35,7 @@ CLOSE_BUTTON_HOVER :: rl.Color{180, 50, 50, 255}
 // Assets
 CLOSE_ICON :: "assets/close-32.png"
 MINIMIZE_ICON :: "assets/minimize-32.png"
+
+UPDATE_INTERVAL :: f32(1.0)
+
+GB :: 1024 * 1024 * 1024
