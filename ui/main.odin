@@ -1,28 +1,10 @@
 package ui
 
-// import "core:fmt"
-// import si "core:sys/info"
 import platform "../platform"
-import rl "vendor:raylib"
+import sys "../system"
 import components "components"
 import c "constants"
-
-System_Info :: struct {
-	os_full:    string,
-	cpu_name:   string,
-	phys_cores: int,
-	log_cores:  int,
-	arch:       string,
-	cp_name:    string,
-	user_name:  string,
-}
-
-Stats :: struct {
-	total_ram: i64,
-	free_ram:  i64,
-	uptime_ms: u64,
-	cpu_usage: f64,
-}
+import rl "vendor:raylib"
 
 main :: proc() {
 
@@ -34,22 +16,51 @@ main :: proc() {
 	hndl := rl.GetWindowHandle()
 	platform.enable_rounded_corners(hndl)
 
+	font_regular := rl.LoadFontEx(c.FONT_PATH, c.FONT_SIZE_INFO, nil, 0)
+	font_big := rl.LoadFontEx(c.FONT_PATH, c.FONT_SIZE_TITLE, nil, 0)
 	close_tex := rl.LoadTexture(c.CLOSE_ICON)
 	min_tex := rl.LoadTexture(c.MINIMIZE_ICON)
 
 	defer {
+		rl.UnloadFont(font_regular)
+		rl.UnloadFont(font_big)
 		rl.UnloadTexture(close_tex)
 		rl.UnloadTexture(min_tex)
 		rl.CloseWindow()
 	}
 
+	sys_inf, _ := sys.get_system_info()
+
+	update_timer: f32 = 0
+
+	prev_cpu, cpu_ok := platform.get_cpu_sample()
+	stats := sys.Stats{}
+
 	for !rl.WindowShouldClose() {
+
+		// calc the cpu usage every sec
+		update_timer += rl.GetFrameTime()
+
+		if update_timer >= c.UPDATE_INTERVAL {
+			if cpu_ok {
+				new_stats, current_cpu, stats_ok := sys.get_stats(prev_cpu)
+
+				if stats_ok {
+					stats = new_stats
+					prev_cpu = current_cpu
+				}
+			}
+
+			update_timer -= c.UPDATE_INTERVAL
+		}
 
 		rl.BeginDrawing()
 
 		rl.ClearBackground(c.BG)
 
-		should_close := components.draw_top_bar(close_tex, min_tex)
+		container_start_y, should_close := components.draw_top_bar(font_big, close_tex, min_tex)
+
+		components.draw_main_container(font_regular, sys_inf, stats, container_start_y)
 
 		rl.EndDrawing()
 
@@ -59,5 +70,3 @@ main :: proc() {
 	}
 
 }
-
-
