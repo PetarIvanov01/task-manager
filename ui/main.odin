@@ -31,7 +31,8 @@ main :: proc() {
 	rl.SetWindowMinSize(c.WINDOW_WIDTH_MIN, c.WINDOW_HEIGHT_MIN)
 	rl.SetTargetFPS(60)
 
-	platform.enable_rounded_corners(rl.GetWindowHandle())
+	hndl := rl.GetWindowHandle()
+	platform.enable_rounded_corners(hndl)
 
 	close_tex := rl.LoadTexture(c.CLOSE_ICON)
 	min_tex := rl.LoadTexture(c.MINIMIZE_ICON)

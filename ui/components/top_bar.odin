@@ -2,6 +2,7 @@ package components
 
 import c "../constants"
 import u "../utils"
+import platform "../../platform/"
 import rl "vendor:raylib"
 
 draw_top_bar :: proc(close_tex, min_tex: rl.Texture2D) -> bool {
@@ -37,6 +38,22 @@ draw_top_bar :: proc(close_tex, min_tex: rl.Texture2D) -> bool {
 
 	close_hovered := rl.CheckCollisionPointRec(mouse, close_button)
 	min_hovered := rl.CheckCollisionPointRec(mouse, min_button)
+
+	top_bar := rl.Rectangle {
+		x      = 0,
+		y      = 0,
+		width  = f32(rl.GetScreenWidth()),
+		height = c.TOP_BAR_HEIGHT,
+	}
+
+	if rl.CheckCollisionPointRec(mouse, top_bar) &&
+	   rl.IsMouseButtonPressed(.LEFT) &&
+	   !close_hovered &&
+	   !min_hovered {
+
+		hwnd := rl.GetWindowHandle()
+		platform.enable_draggable_window(hwnd)
+	}
 
 	if close_hovered {
 		rl.DrawRectangleRec(close_button, c.CLOSE_BUTTON_HOVER)

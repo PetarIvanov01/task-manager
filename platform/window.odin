@@ -23,3 +23,13 @@ enable_rounded_corners :: proc(hwnd: rawptr) -> bool {
 
 	return hr >= 0
 }
+
+enable_draggable_window :: proc(hwnd: rawptr) {
+	if hwnd == nil {
+		return
+	}
+
+	win.ReleaseCapture()
+
+	win.SendMessageA(win.HWND(hwnd), win.WM_NCLBUTTONDOWN, win.WPARAM(win.HTCAPTION), 0)
+}

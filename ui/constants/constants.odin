@@ -12,11 +12,11 @@ WINDOW_HEIGHT_MIN :: 420
 WINDOW_TITLE :: "Vigil"
 
 // Typography
-FONT_SIZE_TITLE :: 20
+FONT_SIZE_TITLE :: 25
 
 // Layout
-TOP_BAR_HEIGHT :: f32(30)
-TOP_BAR_BUTTON_WIDTH :: f32(32)
+TOP_BAR_HEIGHT :: f32(42)
+TOP_BAR_BUTTON_WIDTH :: f32(42)
 
 // Colors
 BG :: rl.Color{30, 33, 40, 255}
@@ -30,5 +30,5 @@ BUTTON_HOVER :: rl.Color{55, 61, 72, 255}
 CLOSE_BUTTON_HOVER :: rl.Color{180, 50, 50, 255}
 
 // Assets
-CLOSE_ICON :: "assets/close-16.png"
-MINIMIZE_ICON :: "assets/minimize-16.png"
+CLOSE_ICON :: "assets/close-32.png"
+MINIMIZE_ICON :: "assets/minimize-32.png"
