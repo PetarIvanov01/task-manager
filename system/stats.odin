@@ -1,16 +1,20 @@
 package stats
 
 import platform "../platform"
+import "core:strings"
 import si "core:sys/info"
 
 System_Info :: struct {
-	os_full:    string,
-	cpu_name:   string,
-	phys_cores: int,
-	log_cores:  int,
-	arch:       string,
-	cp_name:    string,
-	user_name:  string,
+	os_edition:  string,
+	os_release:  string,
+	os_build:    int,
+	os_revision: int,
+	cpu_name:    string,
+	phys_cores:  int,
+	log_cores:   int,
+	arch:        string,
+	cp_name:     string,
+	user_name:   string,
 }
 
 Stats :: struct {
@@ -29,16 +33,28 @@ get_system_info :: proc() -> (System_Info, bool) {
 	cp_name, _ := platform.get_computer_name()
 
 	sys_info := System_Info {
-		os_full    = os_v.full,
-		cpu_name   = cpu_name,
-		phys_cores = physical_cores,
-		log_cores  = logical_cores,
-		arch       = arch,
-		cp_name    = cp_name,
-		user_name  = user_name,
+		os_edition  = _os_edition(os_v.full),
+		os_release  = os_v.release,
+		os_build    = os_v.kernel.minor,
+		os_revision = os_v.kernel.patch,
+		cpu_name    = cpu_name,
+		phys_cores  = physical_cores,
+		log_cores   = logical_cores,
+		arch        = arch,
+		cp_name     = cp_name,
+		user_name   = user_name,
 	}
 
 	return sys_info, true
+}
+
+_os_edition :: proc(full: string) -> string {
+	tail := strings.index(full, " (version:")
+	if tail < 0 {
+		return full
+	}
+
+	return full[:tail]
 }
 
 get_stats :: proc(prev_cpu: platform.CPU_Sample) -> (Stats, platform.CPU_Sample, bool) {
