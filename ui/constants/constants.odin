@@ -11,16 +11,10 @@ WINDOW_HEIGHT_MIN :: 420
 
 WINDOW_TITLE :: "Vigil"
 
-// Typography
-FONT_PATH :: "assets/fonts/inter-regular.ttf"
-FONT_SIZE_TITLE :: 24
-FONT_SIZE_SECTION :: 15
-FONT_SIZE_LABEL :: 16
-FONT_SIZE_INFO :: 16
-
 // Layout
 TOP_BAR_HEIGHT :: f32(42)
 TOP_BAR_BUTTON_WIDTH :: f32(42)
+TABS_BAR_HEIGHT :: f32(TOP_BAR_HEIGHT * 1.2)
 
 CONTENT_PADDING :: f32(24)
 COLUMN_GAP :: f32(28)
@@ -39,9 +33,11 @@ METER_HEIGHT :: f32(22)
 BG :: rl.Color{30, 33, 40, 255}
 
 TOP_BAR :: rl.Color{38, 43, 51, 255}
+TABS_BAR_BG :: rl.Color{34, 38, 45, 255}
+TABS_BAR_BG_BORDER :: rl.Color{56, 62, 73, 255}
+TAB_SELECTED_BG :: rl.Color{38, 53, 79, 255}
 
-TEXT_HEADER_MUTED :: rl.Color{145, 150, 160, 255}
-TEXT_INFO :: rl.Color{230, 233, 239, 255}
+ICON_MUTED :: rl.Color{145, 150, 160, 255} // tint for the top bar glyphs
 
 RULE :: rl.Color{58, 65, 77, 255}
 ACCENT :: rl.Color{79, 140, 255, 255}
@@ -57,3 +53,13 @@ MINIMIZE_ICON :: "assets/minimize-32.png"
 UPDATE_INTERVAL :: f32(1.0)
 
 GB :: 1024 * 1024 * 1024
+
+Tabs :: enum {
+	System,
+	Process,
+}
+
+TAB_LABELS := [Tabs]string {
+	.System  = "System",
+	.Process = "Process",
+}
