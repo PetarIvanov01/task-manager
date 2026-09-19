@@ -36,6 +36,7 @@ TOP_BAR :: rl.Color{38, 43, 51, 255}
 TABS_BAR_BG :: rl.Color{34, 38, 45, 255}
 TABS_BAR_BG_BORDER :: rl.Color{56, 62, 73, 255}
 TAB_SELECTED_BG :: rl.Color{38, 53, 79, 255}
+TAB_HOVERED_BG :: rl.Color{38, 53, 79, 188}
 
 ICON_MUTED :: rl.Color{145, 150, 160, 255} // tint for the top bar glyphs
 

@@ -43,6 +43,8 @@ main :: proc() {
 		}
 	}
 
+	current_tab := c.Tabs.System
+
 	for !rl.WindowShouldClose() {
 		// the ctprint* calls made while drawing live in the temp allocator
 		defer free_all(context.temp_allocator)
@@ -55,13 +57,14 @@ main :: proc() {
 
 		container_start_y, should_close := components.draw_top_bar(close_tex, min_tex)
 
-		current_tab := components.draw_tabs(&container_start_y)
+		current_tab = components.draw_tabs(&container_start_y, current_tab)
 
 		switch current_tab {
 		case .System:
 			components.draw_system_tab_container(sys_inf, stats, 0, container_start_y)
 
 		case .Process:
+			components.draw_processes_tab_container(sys_inf, stats, 0, container_start_y)
 		// Draw the Process tab
 		}
 

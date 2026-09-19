@@ -33,7 +33,7 @@ STYLES := [Style]Config {
 	.Label = {size = 16, spacing = 0, tint = MUTED},
 	.Value = {size = 16, spacing = 0, tint = PRIMARY},
 	.Tab = {size = 20, spacing = 0, tint = rl.Color{154, 163, 178, 255}},
-	.Tab_Selected = {size = 20, spacing = 0, tint = rl.Color{218, 233, 239, 255}},
+	.Tab_Selected = {size = 20, spacing = 0, tint = rl.WHITE},
 }
 
 get_config :: proc(style: Style) -> Config {
