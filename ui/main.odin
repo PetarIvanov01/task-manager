@@ -4,6 +4,7 @@ import platform "../platform"
 import sys "../system"
 import components "components"
 import c "constants"
+import "text"
 import rl "vendor:raylib"
 
 main :: proc() {
@@ -16,14 +17,12 @@ main :: proc() {
 	hndl := rl.GetWindowHandle()
 	platform.enable_rounded_corners(hndl)
 
-	font_regular := rl.LoadFontEx(c.FONT_PATH, c.FONT_SIZE_INFO, nil, 0)
-	font_big := rl.LoadFontEx(c.FONT_PATH, c.FONT_SIZE_TITLE, nil, 0)
+	text.load_fonts()
 	close_tex := rl.LoadTexture(c.CLOSE_ICON)
 	min_tex := rl.LoadTexture(c.MINIMIZE_ICON)
 
 	defer {
-		rl.UnloadFont(font_regular)
-		rl.UnloadFont(font_big)
+		text.unload_fonts()
 		rl.UnloadTexture(close_tex)
 		rl.UnloadTexture(min_tex)
 		rl.CloseWindow()
@@ -36,31 +35,35 @@ main :: proc() {
 	prev_cpu, cpu_ok := platform.get_cpu_sample()
 	stats := sys.Stats{}
 
+	// init ram/uptime so the first second of the window is not empty
+	if cpu_ok {
+		if first_stats, current_cpu, ok := sys.get_stats(prev_cpu); ok {
+			stats = first_stats
+			prev_cpu = current_cpu
+		}
+	}
+
 	for !rl.WindowShouldClose() {
+		// the ctprint* calls made while drawing live in the temp allocator
+		defer free_all(context.temp_allocator)
 
 		// calc the cpu usage every sec
-		update_timer += rl.GetFrameTime()
-
-		if update_timer >= c.UPDATE_INTERVAL {
-			if cpu_ok {
-				new_stats, current_cpu, stats_ok := sys.get_stats(prev_cpu)
-
-				if stats_ok {
-					stats = new_stats
-					prev_cpu = current_cpu
-				}
-			}
-
-			update_timer -= c.UPDATE_INTERVAL
-		}
+		update_cpu_usage_each_second(&update_timer, &prev_cpu, &stats, cpu_ok)
 
 		rl.BeginDrawing()
-
 		rl.ClearBackground(c.BG)
 
-		container_start_y, should_close := components.draw_top_bar(font_big, close_tex, min_tex)
+		container_start_y, should_close := components.draw_top_bar(close_tex, min_tex)
 
-		components.draw_main_container(font_regular, sys_inf, stats, container_start_y)
+		current_tab := components.draw_tabs(&container_start_y)
+
+		switch current_tab {
+		case .System:
+			components.draw_system_tab_container(sys_inf, stats, 0, container_start_y)
+
+		case .Process:
+		// Draw the Process tab
+		}
 
 		rl.EndDrawing()
 
@@ -69,4 +72,26 @@ main :: proc() {
 		}
 	}
 
+}
+
+update_cpu_usage_each_second :: proc(
+	update_timer: ^f32,
+	prev_cpu: ^platform.CPU_Sample,
+	stats: ^sys.Stats,
+	cpu_ok: bool,
+) {
+
+	update_timer^ += rl.GetFrameTime()
+	if update_timer^ >= c.UPDATE_INTERVAL {
+		if cpu_ok {
+			new_stats, current_cpu, stats_ok := sys.get_stats(prev_cpu^)
+
+			if stats_ok {
+				stats^ = new_stats
+				prev_cpu^ = current_cpu
+			}
+		}
+
+		update_timer^ -= c.UPDATE_INTERVAL
+	}
 }
