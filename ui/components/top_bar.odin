@@ -2,17 +2,17 @@ package components
 
 import platform "../../platform/"
 import c "../constants"
-import u "../utils"
+import "../layout"
+import "../text"
 import rl "vendor:raylib"
 
-draw_top_bar :: proc(font: rl.Font, close_tex, min_tex: rl.Texture2D) -> (i32, bool) {
+draw_top_bar :: proc(close_tex, min_tex: rl.Texture2D) -> (i32, bool) {
 	rl.DrawRectangle(0, 0, rl.GetScreenWidth(), i32(c.TOP_BAR_HEIGHT), c.TOP_BAR)
 
-	title_x: i32 = 24
-	title_y := u.get_center_y(c.FONT_SIZE_TITLE, i32(c.TOP_BAR_HEIGHT))
+	title_area := rl.Rectangle{0, 0, f32(rl.GetScreenWidth()), c.TOP_BAR_HEIGHT}
+	layout.cut_left(&title_area, c.CONTENT_PADDING)
 
-	title_pos := rl.Vector2{f32(title_x), f32(title_y)}
-	rl.DrawTextEx(font, c.WINDOW_TITLE, title_pos, f32(c.FONT_SIZE_TITLE), 0, c.TEXT_INFO)
+	text.draw_in(title_area, c.WINDOW_TITLE, .Title)
 
 	screen_width := f32(rl.GetScreenWidth())
 
@@ -64,14 +64,15 @@ draw_top_bar :: proc(font: rl.Font, close_tex, min_tex: rl.Texture2D) -> (i32, b
 	}
 
 	// Center icons inside their buttons
-	close_x := i32(close_button.x) + u.get_center_x(close_tex.width, i32(close_button.width))
-	close_y := i32(close_button.y) + u.get_center_y(close_tex.height, i32(close_button.height))
+	close_x := i32(close_button.x) + layout.get_center_x(close_tex.width, i32(close_button.width))
+	close_y :=
+		i32(close_button.y) + layout.get_center_y(close_tex.height, i32(close_button.height))
 
-	min_x := i32(min_button.x) + u.get_center_x(min_tex.width, i32(min_button.width))
-	min_y := i32(min_button.y) + u.get_center_y(min_tex.height, i32(min_button.height))
+	min_x := i32(min_button.x) + layout.get_center_x(min_tex.width, i32(min_button.width))
+	min_y := i32(min_button.y) + layout.get_center_y(min_tex.height, i32(min_button.height))
 
-	rl.DrawTexture(min_tex, min_x, min_y, c.TEXT_HEADER_MUTED)
-	rl.DrawTexture(close_tex, close_x, close_y, c.TEXT_HEADER_MUTED)
+	rl.DrawTexture(min_tex, min_x, min_y, c.ICON_MUTED)
+	rl.DrawTexture(close_tex, close_x, close_y, c.ICON_MUTED)
 
 	if min_hovered && rl.IsMouseButtonReleased(.LEFT) {
 		rl.MinimizeWindow()
