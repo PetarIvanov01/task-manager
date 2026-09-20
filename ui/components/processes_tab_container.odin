@@ -3,6 +3,7 @@ package components
 import sys "../../system"
 import c "../constants/"
 import "../layout"
+import "../text"
 
 import "core:fmt"
 import rl "vendor:raylib"
@@ -20,7 +21,80 @@ draw_processes_tab_container :: proc(
 		height = f32(rl.GetScreenHeight() - container_start_y),
 	}
 
-	content := layout.inset(main_rect, c.CONTENT_PADDING)
-	left, right := layout.split_v(content, c.COLUMN_GAP)
+	search := layout.cut_top(&main_rect, c.SEARCH_HEIGHT)
+	rl.DrawRectangleRec(search, c.SEARCH_BG)
+	layout.draw_bottom_border(&search, 1, c.TABS_BAR_BG_BORDER)
 
+	processes := sys.get_processes()
+
+	draw_table(&main_rect, processes)
+}
+
+@(private)
+draw_table :: proc(rect: ^rl.Rectangle, data: []sys.Process) {
+	table_content := rect^
+	rl.DrawRectangleRec(table_content, c.TABS_BAR_BG) // Sets the bg color for the whole table
+
+	header_row := layout.cut_top(&table_content, c.PROCESS_ROW_HEIGHT)
+	draw_process_header(&header_row)
+
+	for process, i in data {
+		row := layout.cut_top(&table_content, c.PROCESS_ROW_HEIGHT)
+
+		if i % 2 == 0 {
+			rl.DrawRectangleRec(row, c.PROCESS_ROW_EVEN)
+		} else {
+			rl.DrawRectangleRec(row, c.PROCESS_ROW_ODD)
+		}
+
+		row = layout.inset_xy(row, 18, 0)
+
+		for column in c.Column {
+			config := c.COLUMNS[column]
+			cell_width := table_content.width * config.ratio
+			cell := layout.cut_left(&row, cell_width)
+
+			switch column {
+			case .Name:
+				text.draw_in(cell, fmt.ctprint(process.name), .Process_Row_Value, config.alignment)
+			case .PID:
+				text.draw_in(cell, fmt.ctprint(process.pid), .Process_Row_Value, config.alignment)
+			case .CPU:
+				text.draw_in(
+					cell,
+					fmt.ctprintf("%.1f%%", process.cpu_usage),
+					.Process_Row_Value,
+					config.alignment,
+				)
+
+			case .Memory:
+				text.draw_in(
+					cell,
+					fmt.ctprintf("%.1f MB", process.memory),
+					.Process_Row_Value,
+					config.alignment,
+				)
+			case .Threads:
+				if threads, ok := process.threads.?; ok {
+					text.draw_in(cell, fmt.ctprint(threads), .Process_Row_Value, config.alignment)
+				}
+			}
+		}
+	}
+}
+
+@(private)
+draw_process_header :: proc(rect: ^rl.Rectangle) {
+	table_rect := rect^
+	rl.DrawRectangleRec(table_rect, c.PROCESS_HEADER_BG)
+	layout.draw_bottom_border(&table_rect, 1, c.TABS_BAR_BG_BORDER)
+
+	row := layout.inset_xy(table_rect, 18, 1)
+
+	for column in c.Column {
+		config := c.COLUMNS[column]
+		cell_width := table_rect.width * config.ratio
+		cell := layout.cut_left(&row, cell_width)
+		text.draw_in(cell, config.label, .Process_Row_Label, config.alignment)
+	}
 }
