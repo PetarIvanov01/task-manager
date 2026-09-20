@@ -15,3 +15,13 @@ draw_rule_v :: proc(rect: rl.Rectangle, color: rl.Color) {
 
 	rl.DrawLine(x, i32(rect.y), x, i32(rect.y + rect.height), color)
 }
+
+draw_bottom_border :: proc(rect: ^rl.Rectangle, tick: f32, color: rl.Color) {
+	bottom_border := rl.Rectangle {
+		x      = rect.x,
+		y      = rect.y + rect.height - tick,
+		width  = rect.width,
+		height = tick,
+	}
+	rl.DrawRectangleRec(bottom_border, color)
+}
