@@ -1,4 +1,4 @@
-package stats
+package system
 
 import platform "../platform"
 import "core:strings"
