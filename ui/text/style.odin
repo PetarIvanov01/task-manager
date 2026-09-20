@@ -23,6 +23,8 @@ Style :: enum {
 	Value, // right hand side of a row
 	Tab,
 	Tab_Selected,
+	Process_Row_Label,
+	Process_Row_Value,
 }
 
 // Typography settings for each text style.
@@ -34,6 +36,8 @@ STYLES := [Style]Config {
 	.Value = {size = 16, spacing = 0, tint = PRIMARY},
 	.Tab = {size = 20, spacing = 0, tint = rl.Color{154, 163, 178, 255}},
 	.Tab_Selected = {size = 20, spacing = 0, tint = rl.WHITE},
+	.Process_Row_Label = {size = 18, spacing = 0, tint = rl.WHITE},
+	.Process_Row_Value = {size = 18, spacing = 0, tint = rl.WHITE},
 }
 
 get_config :: proc(style: Style) -> Config {
