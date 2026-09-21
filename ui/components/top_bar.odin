@@ -2,6 +2,7 @@ package components
 
 import platform "../../platform/"
 import c "../constants"
+import "../input"
 import "../layout"
 import "../text"
 import rl "vendor:raylib"
@@ -30,14 +31,8 @@ draw_top_bar :: proc(close_tex, min_tex: rl.Texture2D) -> (i32, bool) {
 		height = c.TOP_BAR_HEIGHT,
 	}
 
-	/*
-		The idea is to get the mouse Vector2 (position of the mouse) and check on each frame
-		whether the mouse is over the button in order to apply the hover
-	*/
-	mouse := rl.GetMousePosition()
-
-	close_hovered := rl.CheckCollisionPointRec(mouse, close_button)
-	min_hovered := rl.CheckCollisionPointRec(mouse, min_button)
+	close_hovered := input.hovered(&close_button)
+	min_hovered := input.hovered(&min_button)
 
 	top_bar := rl.Rectangle {
 		x      = 0,
@@ -46,11 +41,8 @@ draw_top_bar :: proc(close_tex, min_tex: rl.Texture2D) -> (i32, bool) {
 		height = c.TOP_BAR_HEIGHT,
 	}
 
-	if rl.CheckCollisionPointRec(mouse, top_bar) &&
-	   rl.IsMouseButtonPressed(.LEFT) &&
-	   !close_hovered &&
-	   !min_hovered {
-
+	// Dragging
+	if input.selected(&top_bar) && !close_hovered && !min_hovered {
 		hwnd := rl.GetWindowHandle()
 		platform.enable_draggable_window(hwnd)
 	}
@@ -63,22 +55,26 @@ draw_top_bar :: proc(close_tex, min_tex: rl.Texture2D) -> (i32, bool) {
 		rl.DrawRectangleRec(min_button, c.BUTTON_HOVER)
 	}
 
-	// Center icons inside their buttons
-	close_x := i32(close_button.x) + layout.get_center_x(close_tex.width, i32(close_button.width))
-	close_y :=
-		i32(close_button.y) + layout.get_center_y(close_tex.height, i32(close_button.height))
+	close_pos := layout.align_in(
+		close_button,
+		rl.Vector2{f32(close_tex.width), f32(close_tex.height)},
+		.Center,
+	)
 
-	min_x := i32(min_button.x) + layout.get_center_x(min_tex.width, i32(min_button.width))
-	min_y := i32(min_button.y) + layout.get_center_y(min_tex.height, i32(min_button.height))
+	min_pos := layout.align_in(
+		min_button,
+		rl.Vector2{f32(min_tex.width), f32(min_tex.height)},
+		.Center,
+	)
 
-	rl.DrawTexture(min_tex, min_x, min_y, c.ICON_MUTED)
-	rl.DrawTexture(close_tex, close_x, close_y, c.ICON_MUTED)
+	rl.DrawTexture(min_tex, i32(min_pos.x), i32(min_pos.y), c.ICON_MUTED)
+	rl.DrawTexture(close_tex, i32(close_pos.x), i32(close_pos.y), c.ICON_MUTED)
 
-	if min_hovered && rl.IsMouseButtonReleased(.LEFT) {
+	if input.selected(&min_button) {
 		rl.MinimizeWindow()
 	}
 
-	if close_hovered && rl.IsMouseButtonReleased(.LEFT) {
+	if input.selected(&close_button) {
 		return i32(c.TOP_BAR_HEIGHT), true
 	}
 
