@@ -45,6 +45,9 @@ main :: proc() {
 
 	current_tab := c.Tabs.System
 
+	// Process Tab State
+	process_view_state := components.Process_View_State{}
+
 	for !rl.WindowShouldClose() {
 		// the ctprint* calls made while drawing live in the temp allocator
 		defer free_all(context.temp_allocator)
@@ -64,8 +67,7 @@ main :: proc() {
 			components.draw_system_tab_container(sys_inf, stats, 0, container_start_y)
 
 		case .Process:
-			components.draw_processes_tab_container(sys_inf, stats, 0, container_start_y)
-		// Draw the Process tab
+			components.draw_processes_tab_container(sys_inf, stats, 0, container_start_y, &process_view_state)
 		}
 
 		rl.EndDrawing()
