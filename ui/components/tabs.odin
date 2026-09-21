@@ -1,8 +1,10 @@
 package components
 
 import c "../constants"
+import "../input"
 import "../layout"
 import "../text"
+
 import "core:fmt"
 import rl "vendor:raylib"
 
@@ -20,7 +22,6 @@ draw_tabs :: proc(start_y: ^i32, current_tab: c.Tabs) -> c.Tabs {
 
 	tabs_bounds := layout.inset_xy(tabs_rect, f32(24), f32(2))
 
-	mouse := rl.GetMousePosition()
 	selected := current_tab
 
 	for tab in c.Tabs {
@@ -28,9 +29,9 @@ draw_tabs :: proc(start_y: ^i32, current_tab: c.Tabs) -> c.Tabs {
 
 		label_rect := layout.cut_left(&tabs_bounds, f32(160))
 
-		hovered := rl.CheckCollisionPointRec(mouse, label_rect)
+		hovered := input.hovered(&label_rect)
 
-		if hovered && rl.IsMouseButtonPressed(.LEFT) {
+		if input.selected(&label_rect) {
 			selected = tab
 		}
 
@@ -50,3 +51,4 @@ draw_tabs :: proc(start_y: ^i32, current_tab: c.Tabs) -> c.Tabs {
 
 	return selected
 }
+
