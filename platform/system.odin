@@ -99,3 +99,32 @@ _utf16_slice_to_string :: proc(src: []u16) -> string {
 
 	return string(utf8_buffer[:n])
 }
+
+get_process_memory :: proc(pid: int) -> (u64, bool) {
+	handle := win.OpenProcess(win.PROCESS_QUERY_INFORMATION | win.PROCESS_VM_READ, false, u32(pid))
+
+	if handle == nil {
+		return 0, false
+	}
+	defer win.CloseHandle(handle)
+
+	counters := PROCESS_MEMORY_COUNTERS{}
+	counters.cb = size_of(PROCESS_MEMORY_COUNTERS)
+
+	ok := GetProcessMemoryInfo(handle, &counters, counters.cb)
+
+	if !ok {
+		return 0, false
+	}
+
+	return u64(counters.WorkingSetSize), true
+}
+
+// get_process_thread_count :: proc(pid: int) -> (int, bool) {
+//
+// 	// Windows-specific implementation
+// }
+//
+// get_process_cpu_sample :: proc(pid: int) {
+// 	// Windows-specific implementation
+// }
