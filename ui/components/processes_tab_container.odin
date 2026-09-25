@@ -11,6 +11,7 @@ import rl "vendor:raylib"
 Process_View_State :: struct {
 	scroll_y:     f32,
 	selected_pid: Maybe(int),
+	processes:    []sys.Process,
 	// sorting state
 }
 
@@ -32,13 +33,13 @@ draw_processes_tab_container :: proc(
 	rl.DrawRectangleRec(search, c.SEARCH_BG)
 	layout.draw_bottom_border(&search, 1, c.TABS_BAR_BG_BORDER)
 
-	processes := sys.get_processes()
-
-	draw_table(&main_rect, processes, state)
+	draw_table(&main_rect, state)
 }
 
 @(private)
-draw_table :: proc(table_rect: ^rl.Rectangle, data: []sys.Process, state: ^Process_View_State) {
+draw_table :: proc(table_rect: ^rl.Rectangle, state: ^Process_View_State) {
+	data := state.processes
+
 	table_area := table_rect^
 	rl.DrawRectangleRec(table_area, c.TABS_BAR_BG) // Sets the bg color for the whole table
 
