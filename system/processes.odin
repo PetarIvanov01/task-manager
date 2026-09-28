@@ -3,6 +3,9 @@ package system
 import "../platform"
 import "core:os"
 import "core:strings"
+import "core:sync"
+import "core:thread"
+import "core:time"
 
 Process :: struct {
 	name:      string,
@@ -69,4 +72,76 @@ get_processes :: proc() -> ([]Process, bool) {
 	}
 
 	return processes[:], true
+}
+
+Process_Worker :: struct {
+	mutex:      sync.Mutex,
+	latest:     []Process,
+	has_update: bool,
+	running:    bool,
+}
+
+process_worker_proc :: proc(t: ^thread.Thread) {
+	worker := cast(^Process_Worker)t.data
+
+	for {
+		sync.mutex_lock(&worker.mutex)
+		running := worker.running
+		sync.mutex_unlock(&worker.mutex)
+
+		if !running {
+			break
+		}
+
+		new_prc, ok := get_processes()
+
+		if ok {
+			// pub the finished work
+			sync.mutex_lock(&worker.mutex)
+
+			if worker.has_update {
+				free_processes(worker.latest)
+			}
+
+			worker.latest = new_prc
+			worker.has_update = true
+
+			sync.mutex_unlock(&worker.mutex)
+		}
+
+		time.sleep(time.Second)
+	}
+
+}
+
+consume_process_update :: proc(worker: ^Process_Worker, processes: ^[]Process) {
+	new_prc: []Process
+	has_update := false
+
+	sync.mutex_lock(&worker.mutex)
+
+	if worker.has_update {
+		// This is like moving the ownership off the worker thread
+		// by "reseting" its values
+		// Like consuming the worker stuff, and it's ready to
+		// create another snapshot
+		new_prc = worker.latest
+		worker.latest = nil
+		worker.has_update = false
+		has_update = true
+	}
+
+	sync.mutex_unlock(&worker.mutex)
+
+	if has_update {
+		free_processes(processes^)
+		processes^ = new_prc
+	}
+}
+
+
+process_worker_clean_up :: proc(process_worker: ^Process_Worker) {
+	sync.mutex_lock(&process_worker.mutex)
+	process_worker.running = false
+	sync.mutex_unlock(&process_worker.mutex)
 }
