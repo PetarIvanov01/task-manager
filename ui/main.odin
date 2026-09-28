@@ -4,11 +4,11 @@ import platform "../platform"
 import sys "../system"
 import components "components"
 import c "constants"
+import "core:thread"
 import "text"
 import rl "vendor:raylib"
 
 main :: proc() {
-
 	rl.SetConfigFlags(rl.ConfigFlags{.WINDOW_UNDECORATED})
 	rl.InitWindow(c.WINDOW_WIDTH, c.WINDOW_HEIGHT, c.WINDOW_TITLE)
 	rl.SetWindowMinSize(c.WINDOW_WIDTH_MIN, c.WINDOW_HEIGHT_MIN)
@@ -48,20 +48,36 @@ main :: proc() {
 	// Process Tab State
 	process_view_state := components.Process_View_State{}
 
-	if processes, ok := sys.get_processes(); ok {
-		process_view_state.processes = processes
+	process_worker := sys.Process_Worker {
+		running = true,
+	}
+
+	worker_thread := thread.create(sys.process_worker_proc)
+	worker_thread.data = &process_worker
+
+	thread.start(worker_thread)
+
+	defer {
+		sys.process_worker_clean_up(&process_worker)
+		thread.join(worker_thread)
+
+		if process_worker.has_update {
+			sys.free_processes(process_worker.latest)
+		}
 	}
 
 	defer sys.free_processes(process_view_state.processes)
 
 	for !rl.WindowShouldClose() {
+		// check whether the another thread has published the processes
+		sys.consume_process_update(&process_worker, &process_view_state.processes)
+
 		// the ctprint* calls made while drawing live in the temp allocator
 		defer free_all(context.temp_allocator)
 
 		update_timer += rl.GetFrameTime()
 		if update_timer >= c.UPDATE_INTERVAL {
 			update_cpu_usage_each_second(&prev_cpu, &stats, cpu_ok)
-			update_processes_each_second(&process_view_state.processes)
 
 			update_timer -= c.UPDATE_INTERVAL
 		}
@@ -94,18 +110,6 @@ main :: proc() {
 		}
 	}
 
-}
-
-update_processes_each_second :: proc(processes: ^[]sys.Process) {
-	new_processes, ok := sys.get_processes()
-
-	if !ok {
-		return
-	}
-
-	sys.free_processes(processes^)
-
-	processes^ = new_processes
 }
 
 update_cpu_usage_each_second :: proc(
