@@ -6,7 +6,7 @@ desktop applications, and the Windows APIs behind tools like Task Manager.
 
 ## Demo
 
-[Watch the demo](media/vigil-demo.mp4)
+https://github.com/user-attachments/assets/aee754a8-8163-47d5-98b8-5fbb5a11966b
 
 ## What it does
 
