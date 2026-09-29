@@ -77,7 +77,7 @@ draw_resources_column :: proc(area: ^rl.Rectangle, stats: sys.Stats) {
 
 	draw_section_header(area, "CPU & MEMORY")
 
-	draw_meter(layout.cut_top(area, c.METER_ROW_HEIGHT), "CPU", f32(stats.cpu_usage / 100))
+	draw_meter(layout.cut_top(area, c.METER_ROW_HEIGHT), "CPU", f32(stats.system_cpu_usage / 100))
 	draw_meter(layout.cut_top(area, c.METER_ROW_HEIGHT), "Memory", memory_fraction)
 
 	layout.space(area, 8)
