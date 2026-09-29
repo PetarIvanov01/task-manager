@@ -3,9 +3,6 @@ package system
 import "../platform"
 import "core:os"
 import "core:strings"
-import "core:sync"
-import "core:thread"
-import "core:time"
 
 Process :: struct {
 	name:      string,
@@ -15,6 +12,7 @@ Process :: struct {
 	threads:   Maybe(int),
 }
 
+@(private = "package")
 free_processes :: proc(processes: []Process) {
 	for process in processes {
 		delete(process.name)
@@ -23,13 +21,35 @@ free_processes :: proc(processes: []Process) {
 	delete(processes)
 }
 
-get_processes :: proc() -> ([]Process, bool) {
+// Do not call this in the render thread; the process loop is blocking.
+@(private = "package")
+collect_process_metrics :: proc(cpu_state: ^Process_CPU_State) -> ([]Process, f64, bool, bool) {
 	pids, err := os.process_list(context.allocator)
 	if err != nil {
-		return {}, false
+		return {}, 0, false, false
+	}
+	defer delete(pids)
+
+	current_system_sample, system_ok := platform.get_system_cpu_sample()
+
+	system_cpu_usage: f64 = 0
+	system_cpu_ok: bool = false
+
+	if system_ok && cpu_state.has_previous {
+		system_cpu_usage = calculate_system_cpu_usage(
+			cpu_state.previous_system,
+			current_system_sample,
+		)
+		system_cpu_ok = true
 	}
 
-	defer delete(pids)
+	current_cpu_samples := make(map[int]platform.Process_CPU_Sample)
+	keep_cpu_samples := false
+	defer {
+		if !keep_cpu_samples {
+			delete(current_cpu_samples)
+		}
+	}
 
 	processes := make([dynamic]Process, 0, context.allocator)
 
@@ -38,110 +58,58 @@ get_processes :: proc() -> ([]Process, bool) {
 			continue
 		}
 
-		info, err := os.process_info_by_pid(pid, {.Executable_Path}, context.allocator)
+		info, _ := os.process_info_by_pid(pid, {.Executable_Path}, context.allocator)
 
 		name: string
-
 		if .Executable_Path in info.fields && len(info.executable_path) > 0 {
 			name = strings.clone(os.base(info.executable_path), context.allocator)
 		} else {
 			name = strings.clone("unknown", context.allocator)
 		}
 
-		memory_bytes, memory_ok := platform.get_process_memory(pid)
-		memory_mb: f32 = 0
-
-		if name == "unknown" && !memory_ok {
+		if name == "unknown" {
 			os.free_process_info(info, context.allocator)
 			continue
 		}
 
+		memory_bytes, memory_ok := platform.get_process_memory(pid)
+		memory_mb: f32 = 0
 		if memory_ok {
 			memory_mb = f32(memory_bytes) / (1024 * 1024)
 		}
 
+		process_cpu_usage: f64
+
+		if system_ok {
+			process_cpu_usage = sample_process_cpu_usage(
+				pid,
+				cpu_state,
+				&current_cpu_samples,
+				current_system_sample,
+			)
+		}
+
 		process := Process {
-			name   = name,
-			pid    = pid,
-			memory = memory_mb,
+			name      = name,
+			pid       = pid,
+			cpu_usage = process_cpu_usage,
+			memory    = memory_mb,
 		}
 
 		append(&processes, process)
-
 		os.free_process_info(info, context.allocator)
 	}
 
-	return processes[:], true
-}
-
-Process_Worker :: struct {
-	mutex:      sync.Mutex,
-	latest:     []Process,
-	has_update: bool,
-	running:    bool,
-}
-
-process_worker_proc :: proc(t: ^thread.Thread) {
-	worker := cast(^Process_Worker)t.data
-
-	for {
-		sync.mutex_lock(&worker.mutex)
-		running := worker.running
-		sync.mutex_unlock(&worker.mutex)
-
-		if !running {
-			break
+	if system_ok {
+		if cpu_state.has_previous {
+			delete(cpu_state.previous_processes)
 		}
 
-		new_prc, ok := get_processes()
-
-		if ok {
-			// pub the finished work
-			sync.mutex_lock(&worker.mutex)
-
-			if worker.has_update {
-				free_processes(worker.latest)
-			}
-
-			worker.latest = new_prc
-			worker.has_update = true
-
-			sync.mutex_unlock(&worker.mutex)
-		}
-
-		time.sleep(time.Second)
+		cpu_state.previous_system = current_system_sample
+		cpu_state.previous_processes = current_cpu_samples
+		cpu_state.has_previous = true
+		keep_cpu_samples = true
 	}
 
-}
-
-consume_process_update :: proc(worker: ^Process_Worker, processes: ^[]Process) {
-	new_prc: []Process
-	has_update := false
-
-	sync.mutex_lock(&worker.mutex)
-
-	if worker.has_update {
-		// This is like moving the ownership off the worker thread
-		// by "reseting" its values
-		// Like consuming the worker stuff, and it's ready to
-		// create another snapshot
-		new_prc = worker.latest
-		worker.latest = nil
-		worker.has_update = false
-		has_update = true
-	}
-
-	sync.mutex_unlock(&worker.mutex)
-
-	if has_update {
-		free_processes(processes^)
-		processes^ = new_prc
-	}
-}
-
-
-process_worker_clean_up :: proc(process_worker: ^Process_Worker) {
-	sync.mutex_lock(&process_worker.mutex)
-	process_worker.running = false
-	sync.mutex_unlock(&process_worker.mutex)
+	return processes[:], system_cpu_usage, system_cpu_ok, true
 }

@@ -41,7 +41,7 @@ monitor_worker_proc :: proc(t: ^thread.Thread) {
 			break
 		}
 
-		processes, current_system_cpu, system_cpu_ok, ok := get_processes(&cpu_state)
+		processes, current_system_cpu, system_cpu_ok, ok := collect_process_metrics(&cpu_state)
 		if !ok {
 			time.sleep(time.Second)
 			continue
