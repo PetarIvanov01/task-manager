@@ -11,13 +11,11 @@ import rl "vendor:raylib"
 Process_View_State :: struct {
 	scroll_y:     f32,
 	selected_pid: Maybe(int),
-	processes:    []sys.Process,
 	// sorting state
 }
 
 draw_processes_tab_container :: proc(
-	info: sys.System_Info,
-	stats: sys.Stats,
+	processes: []sys.Process,
 	container_start_x: i32 = 0,
 	container_start_y: i32 = 0,
 	state: ^Process_View_State,
@@ -33,13 +31,11 @@ draw_processes_tab_container :: proc(
 	rl.DrawRectangleRec(search, c.SEARCH_BG)
 	layout.draw_bottom_border(&search, 1, c.TABS_BAR_BG_BORDER)
 
-	draw_table(&main_rect, state)
+	draw_table(&main_rect, processes, state)
 }
 
 @(private)
-draw_table :: proc(table_rect: ^rl.Rectangle, state: ^Process_View_State) {
-	data := state.processes
-
+draw_table :: proc(table_rect: ^rl.Rectangle, processes: []sys.Process, state: ^Process_View_State) {
 	table_area := table_rect^
 	rl.DrawRectangleRec(table_area, c.TABS_BAR_BG) // Sets the bg color for the whole table
 
@@ -49,7 +45,7 @@ draw_table :: proc(table_rect: ^rl.Rectangle, state: ^Process_View_State) {
 	draw_process_header(&header_rect)
 
 	body_viewport := table_area
-	total_rows_h := f32(len(data)) * row_height
+	total_rows_h := f32(len(processes)) * row_height
 
 	update_scroll_y(state, body_viewport.height, total_rows_h, row_height)
 
@@ -60,7 +56,7 @@ draw_table :: proc(table_rect: ^rl.Rectangle, state: ^Process_View_State) {
 		i32(body_viewport.height),
 	)
 
-	for process, i in data {
+	for process, i in processes {
 		row_rect := rl.Rectangle {
 			x      = body_viewport.x,
 			y      = body_viewport.y + f32(i) * row_height - state.scroll_y,
