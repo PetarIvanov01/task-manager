@@ -18,10 +18,10 @@ System_Info :: struct {
 }
 
 Stats :: struct {
-	total_ram: i64,
-	free_ram:  i64,
-	uptime_ms: u64,
-	cpu_usage: f64,
+	total_ram:        i64,
+	free_ram:         i64,
+	uptime_ms:        u64,
+	system_cpu_usage: f64,
 }
 
 get_system_info :: proc() -> (System_Info, bool) {
@@ -57,20 +57,13 @@ _os_edition :: proc(full: string) -> string {
 	return full[:tail]
 }
 
-get_stats :: proc(prev_cpu: platform.CPU_Sample) -> (Stats, platform.CPU_Sample, bool) {
-	current_cpu, ok := platform.get_cpu_sample()
-	if !ok {
-		return {}, prev_cpu, false
-	}
-
+get_stats :: proc(system_cpu_usage: f64 = 0) -> Stats {
 	total_ram, free_ram, _, _, _ := si.ram_stats()
 
-	stats := Stats {
+	return Stats {
 		total_ram = total_ram,
-		free_ram  = free_ram,
+		free_ram = free_ram,
 		uptime_ms = platform.get_uptime_ms(),
-		cpu_usage = platform.cpu_usage(prev_cpu, current_cpu),
+		system_cpu_usage = system_cpu_usage,
 	}
-
-	return stats, current_cpu, true
 }
