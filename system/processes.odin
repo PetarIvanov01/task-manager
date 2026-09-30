@@ -63,11 +63,8 @@ collect_process_metrics :: proc(cpu_state: ^Process_CPU_State) -> ([]Process, f6
 		name: string
 		if .Executable_Path in info.fields && len(info.executable_path) > 0 {
 			name = strings.clone(os.base(info.executable_path), context.allocator)
-		} else {
-			name = strings.clone("unknown", context.allocator)
 		}
-
-		if name == "unknown" {
+		else {
 			os.free_process_info(info, context.allocator)
 			continue
 		}
